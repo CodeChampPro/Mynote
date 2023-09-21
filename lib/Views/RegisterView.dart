@@ -2,7 +2,6 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:developer' as devtools show log;
 
 import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/utilities/show_error_dialog.dart';
@@ -59,32 +58,39 @@ class _RegisterViewState extends State<RegisterView> {
             final email = _email.text;
             final password = _password.text;
             try {
-              final userCredential = await FirebaseAuth.instance
-                  .createUserWithEmailAndPassword(
-                      email: email, password: password);
-              devtools.log(userCredential.toString());
+              await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                email: email,
+                password: password,
+              );
+              final user = FirebaseAuth.instance.currentUser;
+              await user?.sendEmailVerification();
             } on FirebaseAuthException catch (e) {
               if (e.code == 'weak-password') {
                 await showErrorDialog(
-                    context,
-                    'Weak password',
-                  );
+                  context,
+                  'Weak password',
+                );
               } else if (e.code == 'email-already-in-use') {
                 await showErrorDialog(
-                    context,
-                    'Email is already in use',
-                  );
+                  context,
+                  'Email is already in use',
+                );
               } else if (e.code == 'unvalid-email') {
                 await showErrorDialog(
-                    context,
-                    'Unvalid email',
-                  );
+                  context,
+                  'Unvalid email',
+                );
               } else {
                 await showErrorDialog(
-                    context,
-                    'Error: ${e.code}',
-                  );
+                  context,
+                  'Error: ${e.code}',
+                );
               }
+            } catch (e) {
+              await showErrorDialog(
+                context,
+                e.toString(),
+              );
             }
 
             // other sign in methods (Google): https://firebase.flutter.dev/docs/auth/usage/#other-sign-in-methods
